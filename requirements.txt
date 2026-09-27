@@ -1,0 +1,6 @@
+stable-baselines3[extra]
+gymnasium
+yfinance
+pandas
+numpy
+requests

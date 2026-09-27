@@ -1,4 +1,6 @@
 import yfinance as yf
+import pandas as pd
+import numpy as np
 from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import BaseCallback
 from apex_env import ApexPrimalEnv

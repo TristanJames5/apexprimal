@@ -39,7 +39,7 @@ class DiscordCallback(BaseCallback):
         return True
 
 # 1. Prepare the Training Loop
-PAIRS = ["BTC-USD", "EURUSD=X", "GBPUSD=X", "JPY=X", "XAUUSD=X"]
+PAIRS = ["BTC-USD", "EURUSD=X", "GBPUSD=X", "JPY=X", "GC=F"]
 TOTAL_STEPS = 100000 # In Colab, we will change this to 10,000,000 steps.
 STEPS_PER_PAIR = TOTAL_STEPS // len(PAIRS)
 

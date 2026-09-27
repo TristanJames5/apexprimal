@@ -41,6 +41,9 @@ print("Downloading market data for the AI to study...")
 # In Colab we will use historical CSVs or advanced API pulls to get 1m data over 10 years. 
 # For now, we fetch a small sample just to prove the code works.
 btc = yf.download("BTC-USD", period="5d", interval="1m") 
+# Flatten the MultiIndex columns (yfinance new update fix)
+if isinstance(btc.columns, pd.MultiIndex):
+    btc.columns = btc.columns.get_level_values(0)
 btc = btc[['Open', 'High', 'Low', 'Close', 'Volume']].dropna()
 
 # 2. Build the Virtual Sandbox

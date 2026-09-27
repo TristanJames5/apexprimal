@@ -36,30 +36,44 @@ class DiscordCallback(BaseCallback):
             )
         return True
 
-# 1. Download 10 years of Bitcoin data (Multi-Timeframe requires 1m, 15m, 1h, 1d)
-print("Downloading market data for the AI to study...")
-# In Colab we will use historical CSVs or advanced API pulls to get 1m data over 10 years. 
-# For now, we fetch a small sample just to prove the code works.
-btc = yf.download("BTC-USD", period="5d", interval="1m") 
-# Flatten the MultiIndex columns (yfinance new update fix)
-if isinstance(btc.columns, pd.MultiIndex):
-    btc.columns = btc.columns.get_level_values(0)
-btc = btc[['Open', 'High', 'Low', 'Close', 'Volume']].dropna()
-
-# 2. Build the Virtual Sandbox
-print("Building the virtual trading gymnasium...")
-env = ApexPrimalEnv(df_1m=btc, df_15m=btc, df_1h=btc, df_daily=btc)
-
-# 3. Create the Deep Reinforcement Learning Agent (PPO)
-print("Initializing Proximal Policy Optimization (PPO) Neural Network...")
-model = PPO("MlpPolicy", env, verbose=1, learning_rate=0.0003)
-
-# 4. Train the AI with Discord Updates
+# 1. Prepare the Training Loop
+PAIRS = ["BTC-USD", "EURUSD=X", "GBPUSD=X", "JPY=X", "XAUUSD=X"]
 TOTAL_STEPS = 100000 # In Colab, we will change this to 10,000,000 steps.
+STEPS_PER_PAIR = TOTAL_STEPS // len(PAIRS)
+
+# Initialize a base model with dummy data to build the architecture
+print("Initializing Proximal Policy Optimization (PPO) Neural Network...")
+dummy_df = pd.DataFrame(np.random.rand(100, 5), columns=['Open', 'High', 'Low', 'Close', 'Volume'])
+from stable_baselines3.common.vec_env import DummyVecEnv
+env = ApexPrimalEnv(df_1m=dummy_df, df_15m=dummy_df, df_1h=dummy_df, df_daily=dummy_df)
+dummy_env = DummyVecEnv([lambda: env])
+model = PPO("MlpPolicy", dummy_env, verbose=1, learning_rate=0.0003)
+
 discord_callback = DiscordCallback(total_timesteps=TOTAL_STEPS)
 
-print(f"WARNING: Starting {TOTAL_STEPS:,} Simulated Trades...")
-model.learn(total_timesteps=TOTAL_STEPS, callback=discord_callback)
+print(f"WARNING: Starting {TOTAL_STEPS:,} Simulated Trades across {len(PAIRS)} assets...")
+
+for pair in PAIRS:
+    print(f"\n========================================")
+    print(f" 🦍 TRAINING ON PAIR: {pair}")
+    print(f"========================================")
+    
+    data = yf.download(pair, period="5d", interval="1m") 
+    if isinstance(data.columns, pd.MultiIndex):
+        data.columns = data.columns.get_level_values(0)
+    data = data[['Open', 'High', 'Low', 'Close', 'Volume']].dropna()
+    
+    if len(data) < 100:
+        print(f"Not enough data for {pair}. Skipping...")
+        continue
+
+    # Create new environment for this pair
+    pair_env = ApexPrimalEnv(df_1m=data, df_15m=data, df_1h=data, df_daily=data)
+    vec_env = DummyVecEnv([lambda: pair_env])
+    
+    # Plug environment into model and train
+    model.set_env(vec_env)
+    model.learn(total_timesteps=STEPS_PER_PAIR, callback=discord_callback, reset_num_timesteps=False)
 
 print("Training Complete! Saving Brain...")
 model.save("apex_god_model")

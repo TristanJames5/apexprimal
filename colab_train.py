@@ -23,8 +23,12 @@ class DiscordCallback(BaseCallback):
 
     def _on_step(self) -> bool:
         if self.n_calls % self.check_freq == 0:
-            # We estimate current AI performance metrics here (simplified for sandbox)
-            current_reward = self.locals.get('rewards', [0])[0] 
+            # We estimate current AI performance metrics here
+            if len(self.model.ep_info_buffer) > 0:
+                current_reward = sum([ep_info['r'] for ep_info in self.model.ep_info_buffer]) / len(self.model.ep_info_buffer)
+            else:
+                current_reward = 0
+                
             # In a real setup, we would extract the true win rate from the environment logs. 
             # For now, we simulate a learning curve (Win rate goes up as it trains).
             estimated_win_rate = min(95.0, 30.0 + (self.n_calls / self.total_timesteps) * 60.0) 
@@ -33,7 +37,7 @@ class DiscordCallback(BaseCallback):
             send_training_update(
                 step=self.n_calls, 
                 total_steps=self.total_timesteps, 
-                current_reward=current_reward * 1000, 
+                current_reward=current_reward, 
                 win_rate=estimated_win_rate
             )
         return True

@@ -11,11 +11,11 @@ print("========================================")
 
 # 1. Load the fully trained Brain (Make sure you downloaded it from Colab!)
 try:
-    print("Loading Apex_God_Model.zip...")
-    model = PPO.load("Apex_God_Model.zip")
+    print("Loading apex_model.zip...")
+    model = PPO.load("apex_model.zip")
     print("Brain successfully loaded.")
 except Exception as e:
-    print("❌ ERROR: Could not find 'Apex_God_Model.zip' in this folder.")
+    print("❌ ERROR: Could not find 'apex_model.zip' in this folder.")
     print("Make sure you downloaded it from Google Colab and placed it here!")
     exit()
 

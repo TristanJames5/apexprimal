@@ -44,16 +44,16 @@ TOTAL_STEPS = 100000 # In Colab, we will change this to 10,000,000 steps.
 STEPS_PER_PAIR = TOTAL_STEPS // len(PAIRS)
 
 # Initialize or Load the Brain
-print("Checking for existing Brain (apex_god_model.zip)...")
+print("Checking for existing Brain (apex_model.zip)...")
 dummy_df = pd.DataFrame(np.random.rand(100, 5), columns=['Open', 'High', 'Low', 'Close', 'Volume'])
 from stable_baselines3.common.vec_env import DummyVecEnv
 env = ApexPrimalEnv(df_1m=dummy_df, df_15m=dummy_df, df_1h=dummy_df, df_daily=dummy_df)
 dummy_env = DummyVecEnv([lambda: env])
 
 import os
-if os.path.exists("apex_god_model.zip"):
+if os.path.exists("apex_model.zip"):
     print("Found existing Brain! Resuming training...")
-    model = PPO.load("apex_god_model.zip", env=dummy_env)
+    model = PPO.load("apex_model.zip", env=dummy_env)
 else:
     print("No existing Brain found. Initializing new PPO Neural Network...")
     model = PPO("MlpPolicy", dummy_env, verbose=1, learning_rate=0.0003)
@@ -85,5 +85,5 @@ for pair in PAIRS:
     model.learn(total_timesteps=STEPS_PER_PAIR, callback=discord_callback, reset_num_timesteps=False)
 
 print("Training Complete! Saving Brain...")
-model.save("apex_god_model")
-print("Brain saved as apex_god_model.zip")
+model.save("apex_model")
+print("Brain saved as apex_model.zip")

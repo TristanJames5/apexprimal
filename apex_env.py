@@ -20,7 +20,7 @@ class ApexPrimalEnv(gym.Env):
         self.df_daily = df_daily.reset_index(drop=True)
         
         self.initial_balance = initial_balance
-        self.spread_fee = 0.00015 # 1.5 pips average spread/commission
+        self.spread_fee = 0.00015 # 0.015% percentage spread (works for Crypto, Forex, Metals, Indices)
         
         # ACTION SPACE UPGRADE: Position Sizing
         # 0: Hold
@@ -83,27 +83,32 @@ class ApexPrimalEnv(gym.Env):
         # PARSE ACTION LOGIC (Buy/Sell with Position Sizing)
         if action in [1, 2, 3] and self.position == 0:
             self.position = 1
-            self.entry_price = current_price + self.spread_fee # Pay the spread!
+            self.entry_price = current_price * (1 + self.spread_fee) # Pay the percentage spread!
             self.trade_duration = 0
             self.lot_size_multiplier = [0.01, 0.05, 0.10][action - 1] # 1%, 5%, 10% risk
             
         elif action in [4, 5, 6] and self.position == 0:
             self.position = -1
-            self.entry_price = current_price - self.spread_fee # Pay the spread!
+            self.entry_price = current_price * (1 - self.spread_fee) # Pay the percentage spread!
             self.trade_duration = 0
             self.lot_size_multiplier = [0.01, 0.05, 0.10][action - 4]
             
         elif self.position != 0 and action == 0:
             self.trade_duration += 1
-            unrealized = (current_price - self.entry_price) if self.position == 1 else (self.entry_price - current_price)
-            # Brutal penalty for deep drawdowns, multiplied by their lot size
-            if unrealized < 0:
-                reward -= abs(unrealized) * self.lot_size_multiplier * 2.0 
+            price_change_pct = (current_price - self.entry_price) / self.entry_price if self.position == 1 else (self.entry_price - current_price) / self.entry_price
+            
+            # Penalty for holding losing trades, scaled by risk and leverage (100x)
+            if price_change_pct < 0:
+                reward -= abs(price_change_pct) * self.lot_size_multiplier * 100.0 * self.balance * 0.1 
 
         elif action == 7 and self.position != 0: # Close Position
-            profit = (current_price - self.entry_price) if self.position == 1 else (self.entry_price - current_price)
-            actual_profit = profit * self.lot_size_multiplier * 10000 # Leveraged PnL
+            price_change_pct = (current_price - self.entry_price) / self.entry_price if self.position == 1 else (self.entry_price - current_price) / self.entry_price
             
+            # actual_profit = position_size * percentage_move * Leverage(100x)
+            position_size = self.balance * self.lot_size_multiplier
+            actual_profit = position_size * price_change_pct * 100.0
+            
+            # Reward is exactly the monetary profit/loss
             reward += actual_profit
             self.balance += actual_profit
             

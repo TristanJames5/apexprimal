@@ -40,7 +40,7 @@ class DiscordCallback(BaseCallback):
 
 # 1. Prepare the Training Loop
 PAIRS = ["BTC-USD", "EURUSD=X", "GBPUSD=X", "JPY=X", "GC=F"]
-TOTAL_STEPS = 100000 # In Colab, we will change this to 10,000,000 steps.
+TOTAL_STEPS = 10000000 # Phase 2: Massive Cloud Training Run (10 Million Steps)
 STEPS_PER_PAIR = TOTAL_STEPS // len(PAIRS)
 
 # Initialize or Load the Brain
@@ -67,7 +67,7 @@ for pair in PAIRS:
     print(f" 🦍 TRAINING ON PAIR: {pair}")
     print(f"========================================")
     
-    data = yf.download(pair, period="5d", interval="1m") 
+    data = yf.download(pair, period="7d", interval="1m") 
     if isinstance(data.columns, pd.MultiIndex):
         data.columns = data.columns.get_level_values(0)
     data = data[['Open', 'High', 'Low', 'Close', 'Volume']].dropna()

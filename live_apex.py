@@ -1,6 +1,7 @@
 import time
 import yfinance as yf
 import pandas as pd
+import numpy as np
 from stable_baselines3 import PPO
 from discord_notifier import send_live_signal
 
